@@ -11,6 +11,14 @@ import {
 import { onMount } from "svelte";
 import type { LIGHT_DARK_MODE } from "@/types/config.ts";
 
+// This component takes no props. The type is declared explicitly because a Svelte 5
+// runes component with no props is exposed as `Record<string, never>`, and that
+// index signature types `client:*` as `never`, which makes Astro reject
+// `<LightDarkSwitch client:only="svelte" />` with ts(2322).
+type Props = Record<never, never>;
+
+const { }: Props = $props();
+
 const seq: LIGHT_DARK_MODE[] = [LIGHT_MODE, DARK_MODE, AUTO_MODE];
 let mode: LIGHT_DARK_MODE = $state(AUTO_MODE);
 

@@ -29,21 +29,25 @@ const isPublic = src.startsWith("/");
 // biome-ignore lint/suspicious/noImplicitAnyLet: <check later>
 let img;
 if (isLocal) {
-	// NOTE: this glob MUST stay restricted to image extensions.
-	// A bare "../../**" also sweeps every .css / .ts / .md file under src/ into the
-	// Rollup module graph, which pulls src/styles/*.css in as independent CSS modules.
-	// Vite then compiles them in parallel with no ordering guarantee, so Tailwind can
-	// process markdown.css (which does `@apply link`) before main.css has declared
-	// `.link` inside `@layer components`, failing the build with:
-	//   "The `link` class does not exist. If `link` is a custom class,
-	//    make sure it is defined within a `@layer` directive."
-	// That made roughly 1 in 5 builds fail nondeterministically.
-	const files = import.meta.glob<ImageMetadata>(
-		"../../**/*.{png,jpg,jpeg,webp,avif,gif,svg,bmp,ico,tif,tiff}",
-		{
-			import: "default",
-		},
-	);
+	// ⚠️ DO NOT narrow this glob to image extensions.
+	//
+	// It looks like a bug that "../../**" sweeps every .css / .styl / .ts file under src/
+	// into the Rollup module graph, but that side effect is LOAD-BEARING: nothing else in
+	// the project imports src/styles/*, and Vite hoists the CSS of glob-matched modules into
+	// the page stylesheet. Narrowing this pattern therefore removes main.css, markdown.css,
+	// variables.styl etc. from the build entirely — the site still builds and still looks
+	// "mostly right", but every custom component class silently disappears:
+	// .card-base, .btn-plain, .link, .float-panel, .meta-icon, .custom-md, ...
+	// i.e. cards lose their background/rounding, buttons lose their styling and post
+	// content loses its markdown typography.
+	//
+	// The build flakiness that this glob used to cause ("The `link` class does not exist",
+	// roughly 1 build in 5) has been fixed at its real source instead: the cross-file
+	// `@apply link` / `@apply btn-regular-dark` in src/styles/markdown.css were expanded to
+	// the equivalent utilities, so no style file depends on another's compile order.
+	const files = import.meta.glob<ImageMetadata>("../../**", {
+		import: "default",
+	});
 	let normalizedPath = path
 		.normalize(path.join("../../", basePath, src))
 		.replace(/\\/g, "/");

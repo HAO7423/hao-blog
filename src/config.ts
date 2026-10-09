@@ -8,8 +8,8 @@ import type {
 import { LinkPreset } from "./types/config";
 
 export const siteConfig: SiteConfig = {
-	title: "hao 的博客", // TODO: 换成你想要的博客标题
-	subtitle: "记录技术与生活", // TODO: 换成你的副标题
+	title: "hao's blog",
+	subtitle: "", // 留空；页面标题会自动省略分隔符，见 layouts/Layout.astro
 	lang: "zh_CN", // Language code, e.g. 'en', 'zh_CN', 'ja', etc.
 	themeColor: {
 		hue: 250, // Default hue for the theme color, from 0 to 360. e.g. red: 0, teal: 200, cyan: 250, pink: 345
@@ -54,8 +54,8 @@ export const navBarConfig: NavBarConfig = {
 
 export const profileConfig: ProfileConfig = {
 	avatar: "assets/images/avatar.png", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
-	name: "hao", // TODO: 换成你想显示的昵称
-	bio: "在这里写一句个人简介。", // TODO: 换成你的简介
+	name: "hao",
+	bio: "SJTU 25 ICISEE",
 	links: [
 		{
 			name: "GitHub",

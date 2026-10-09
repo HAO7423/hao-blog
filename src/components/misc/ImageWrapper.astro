@@ -1,0 +1,66 @@
+---
+import path from "node:path";
+
+interface Props {
+	id?: string;
+	src: string;
+	class?: string;
+	alt?: string;
+	position?: string;
+	basePath?: string;
+}
+
+import { Image } from "astro:assets";
+import { url } from "../../utils/url-utils";
+
+const { id, src, alt, position = "center", basePath = "/" } = Astro.props;
+const className = Astro.props.class;
+
+const isLocal = !(
+	src.startsWith("/") ||
+	src.startsWith("http") ||
+	src.startsWith("https") ||
+	src.startsWith("data:")
+);
+const isPublic = src.startsWith("/");
+
+// TODO temporary workaround for images dynamic import
+// https://github.com/withastro/astro/issues/3373
+// biome-ignore lint/suspicious/noImplicitAnyLet: <check later>
+let img;
+if (isLocal) {
+	// NOTE: this glob MUST stay restricted to image extensions.
+	// A bare "../../**" also sweeps every .css / .ts / .md file under src/ into the
+	// Rollup module graph, which pulls src/styles/*.css in as independent CSS modules.
+	// Vite then compiles them in parallel with no ordering guarantee, so Tailwind can
+	// process markdown.css (which does `@apply link`) before main.css has declared
+	// `.link` inside `@layer components`, failing the build with:
+	//   "The `link` class does not exist. If `link` is a custom class,
+	//    make sure it is defined within a `@layer` directive."
+	// That made roughly 1 in 5 builds fail nondeterministically.
+	const files = import.meta.glob<ImageMetadata>(
+		"../../**/*.{png,jpg,jpeg,webp,avif,gif,svg,bmp,ico,tif,tiff}",
+		{
+			import: "default",
+		},
+	);
+	let normalizedPath = path
+		.normalize(path.join("../../", basePath, src))
+		.replace(/\\/g, "/");
+	const file = files[normalizedPath];
+	if (!file) {
+		console.error(
+			`\n[ERROR] Image file not found: ${normalizedPath.replace("../../", "src/")}`,
+		);
+	}
+	img = await file();
+}
+
+const imageClass = "w-full h-full object-cover";
+const imageStyle = `object-position: ${position}`;
+---
+<div id={id} class:list={[className, 'overflow-hidden relative']}>
+    <div class="transition absolute inset-0 dark:bg-black/10 bg-opacity-50 pointer-events-none"></div>
+    {isLocal && img && <Image src={img} alt={alt || ""} class={imageClass} style={imageStyle}/>}
+    {!isLocal && <img src={isPublic ? url(src) : src} alt={alt || ""} class={imageClass} style={imageStyle}/>}
+</div>

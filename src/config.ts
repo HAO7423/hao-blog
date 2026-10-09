@@ -16,8 +16,11 @@ export const siteConfig: SiteConfig = {
 		fixed: false, // Hide the theme color picker for visitors
 	},
 	banner: {
-		enable: false,
-		src: "assets/images/demo-banner.png", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
+		enable: true, // 顶部横幅背景；改回 false 即可关闭
+		// 换背景最简单的方式：用你自己的图片覆盖 src/assets/images/banner.png（保持文件名不变），
+		// 配置这里一个字都不用动。也可以改成别的文件名，或用以 "/" 开头的 public 目录路径
+		// （放在 public/ 下的图片不会被 Astro 压缩优化，适合很大的图）。
+		src: "assets/images/banner.png",
 		position: "center", // Equivalent to object-position, only supports 'top', 'center', 'bottom'. 'center' by default
 		credit: {
 			enable: false, // Display the credit text of the banner image

@@ -75,8 +75,14 @@ jobs:
           # 因此 site 与 base 必须分开设置。所有内部链接都经由
           # src/utils/url-utils.ts 拼上 import.meta.env.BASE_URL，
           # 所以这里设置好即可，代码无需改动。
+          #
+          # SITE_URL 这里写死为小写，不用 github.repository_owner：
+          # 该变量返回的是 "HAO7423"（大写），会让 canonical / sitemap / RSS
+          # 里出现 https://HAO7423.github.io/... 。域名大小写虽不影响访问，
+          # 但输出不干净。GitHub Actions 表达式没有 toLowerCase，故直接写死。
+          #
           # （若仓库改名为 <用户名>.github.io，则 BASE_PATH 应设为 "/"）
-          SITE_URL: https://${{ github.repository_owner }}.github.io
+          SITE_URL: https://hao7423.github.io
           BASE_PATH: /${{ github.event.repository.name }}/
 
       - name: Upload artifact

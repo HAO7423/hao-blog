@@ -43,14 +43,28 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check whether GitHub Pages is enabled
+        # 这一步的作用只是把报错变清楚。
+        # GitHub Pages 无法由任何 token 通过 API 首次创建（默认 GITHUB_TOKEN
+        # 会返回 "Resource not accessible by integration"），必须在仓库设置里
+        # 手动启用一次。若不先检查，后面 configure-pages 只会抛出一句含糊的
+        # "Get Pages site failed"，让人不知道该怎么办。
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh api "repos/${{ github.repository }}/pages" > /dev/null 2>&1; then
+            echo "GitHub Pages 已启用，继续部署。"
+          else
+            echo "::error title=需要手动启用 GitHub Pages::请打开 https://github.com/${{ github.repository }}/settings/pages ，把 Build and deployment 的 Source 设为 \"GitHub Actions\"（只需一次）。保存后回到 Actions 页面重新运行本 workflow，或在本地 git push 一个空提交来触发。"
+            exit 1
+          fi
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
-        # 刻意不使用 enablement: true。
-        # 它需要通过 API 创建 Pages 站点，而默认的 GITHUB_TOKEN 不具备该权限，
-        # 实测会报 "Create Pages site failed. Error: Resource not accessible by
-        # integration" 并让整个 job 失败（已实测确认）。
-        # 因此 Pages 需要在仓库 Settings → Pages 里手动启用一次，
-        # Source 选择 "GitHub Actions"；之后本 workflow 即可全自动部署。
+        # 刻意不使用 enablement: true —— 已实测它必然失败：
+        #   Create Pages site failed. Error: Resource not accessible by integration
+        # 因为默认 GITHUB_TOKEN 没有创建 Pages 站点的权限。
+        # 上一一步已经检查过 Pages 是否启用，并给出明确指引。
 
       - name: Build site
         # 注意这里是 pnpm build，不是 astro build —— 前者会额外执行

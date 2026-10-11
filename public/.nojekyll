@@ -1,0 +1,4 @@
+此文件让 GitHub Pages 跳过 Jekyll 处理。
+Astro 的资源目录名为 _astro（以下划线开头），若走 Jekyll 构建会被忽略，
+导致整站 CSS/JS 全部 404。通过 GitHub Actions 部署时本不会执行 Jekyll，
+保留此文件仅作为保险。

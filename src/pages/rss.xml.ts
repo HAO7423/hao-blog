@@ -19,10 +19,20 @@ function stripInvalidXmlChars(str: string): string {
 export async function GET(context: APIContext) {
 	const blog = await getSortedPosts();
 
+	// `context.site` only holds the configured origin (e.g. https://user.github.io).
+	// On sub-path deployments such as GitHub Pages *project* repositories the feed's
+	// channel link must also carry the base path, otherwise it points at the host
+	// root instead of the blog. Per-item links already go through `url()`, which
+	// prefixes BASE_URL, so only this channel-level link needed fixing.
+	const feedUrl = new URL(
+		import.meta.env.BASE_URL,
+		context.site ?? "https://fuwari.vercel.app",
+	).href;
+
 	return rss({
 		title: siteConfig.title,
 		description: siteConfig.subtitle || siteConfig.title,
-		site: context.site ?? "https://fuwari.vercel.app",
+		site: feedUrl,
 		items: blog.map((post) => {
 			const content =
 				typeof post.body === "string" ? post.body : String(post.body || "");

@@ -1,0 +1,78 @@
+name: Deploy to GitHub Pages
+
+# 把博客自动发布到 GitHub Pages。
+# 触发方式：推送到 main（例如写完文章 git push），或在 Actions 页面手动运行。
+#
+# 部署地址：https://<用户名>.github.io/<仓库名>/
+# 首次运行时 configure-pages 会自动为仓库启用 Pages，无需手动去设置页点开关。
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# GitHub Pages 部署所需的最小权限
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时间只跑一个部署；不要取消进行中的部署，避免发布出半成品站点
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false # 版本取自 package.json 的 packageManager 字段
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true # 首次运行自动启用 Pages
+
+      - name: Build site
+        # 注意这里是 pnpm build，不是 astro build —— 前者会额外执行
+        # pagefind 生成站内搜索索引，漏掉它搜索会静默失效。
+        run: pnpm build
+        env:
+          # GitHub Pages 的项目仓库部署在 /<仓库名>/ 子路径下，
+          # 因此 site 与 base 必须分开设置。所有内部链接都经由
+          # src/utils/url-utils.ts 拼上 import.meta.env.BASE_URL，
+          # 所以这里设置好即可，代码无需改动。
+          # （若仓库改名为 <用户名>.github.io，则 BASE_PATH 应设为 "/"）
+          SITE_URL: https://${{ github.repository_owner }}.github.io
+          BASE_PATH: /${{ github.event.repository.name }}/
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -25,7 +25,8 @@ import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
 import { pluginCustomCopyButton } from "./src/plugins/expressive-code/custom-copy-button.js";
 
 // Site URL resolution, in priority order:
-//   1. SITE_URL          — set this in Vercel once your own domain is live
+//   1. SITE_URL          — explicit override (custom domain, or a host that
+//      does not inject its own variable)
 //   2. VERCEL_PROJECT_PRODUCTION_URL — injected automatically by Vercel,
 //      so *.vercel.app works with zero configuration
 //   3. localhost — local `pnpm dev` / `pnpm build`
@@ -36,10 +37,19 @@ const siteUrl =
 		? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
 		: "http://localhost:4321");
 
+// Base path.
+// GitHub Pages serves *project* repositories from a sub-path (e.g. /hao-blog/),
+// whereas Vercel / Cloudflare Pages / Netlify serve from the root ("/").
+// The GitHub Pages workflow sets BASE_PATH; every other build falls back to "/".
+// All internal links, the favicons and the Pagefind search index go through
+// src/utils/url-utils.ts, which prefixes import.meta.env.BASE_URL, so a
+// sub-path deployment needs no other change.
+const basePath = process.env.BASE_PATH ?? "/";
+
 // https://astro.build/config
 export default defineConfig({
 	site: siteUrl,
-	base: "/",
+	base: basePath,
 	trailingSlash: "always",
 	integrations: [
 		tailwind({

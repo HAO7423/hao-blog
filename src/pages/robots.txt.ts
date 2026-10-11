@@ -6,7 +6,8 @@ import type { APIRoute } from "astro";
 // concatenated directly. Previously the sitemap URL was resolved against
 // import.meta.env.SITE (origin only), which dropped the base entirely.
 const base = import.meta.env.BASE_URL;
-const sitemapUrl = new URL(`${base}sitemap-index.xml`, import.meta.env.SITE).href;
+const sitemapUrl = new URL(`${base}sitemap-index.xml`, import.meta.env.SITE)
+	.href;
 
 const robotsTxt = `
 User-agent: *

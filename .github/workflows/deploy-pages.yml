@@ -45,8 +45,12 @@ jobs:
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
-        with:
-          enablement: true # 首次运行自动启用 Pages
+        # 刻意不使用 enablement: true。
+        # 它需要通过 API 创建 Pages 站点，而默认的 GITHUB_TOKEN 不具备该权限，
+        # 实测会报 "Create Pages site failed. Error: Resource not accessible by
+        # integration" 并让整个 job 失败（已实测确认）。
+        # 因此 Pages 需要在仓库 Settings → Pages 里手动启用一次，
+        # Source 选择 "GitHub Actions"；之后本 workflow 即可全自动部署。
 
       - name: Build site
         # 注意这里是 pnpm build，不是 astro build —— 前者会额外执行
